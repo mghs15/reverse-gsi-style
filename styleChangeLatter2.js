@@ -131,7 +131,7 @@ var convertImdObjToList = function(imdList, list){
         item.list.push(itemLayer);
         
         if(!layerMapbox.metadata["line-role"] || layerMapbox.metadata["line-role"] != "outline"){
-          if(item.zIndex){
+          if(!item.zIndex){
             item.zIndex = layerMapbox.metadata.zIndex ? layerMapbox.metadata.zIndex : 10000;
           }
         }
