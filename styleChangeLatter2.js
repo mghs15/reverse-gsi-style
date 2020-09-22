@@ -33,15 +33,16 @@ var convertImdObjToList = function(imdList, list){
           type: "layer",
           list: [],
           visible: true,
-          filter: []
-        }
+          filter: [],
+          zIndex: 1
+        };
         
         for(i in imdList[name]["layers"][zRange]){
           var layerMapbox = imdList[name]["layers"][zRange][i];
           if(!layerMapbox.paint) layerMapbox.paint = {};
           if(!layerMapbox.layout) layerMapbox.layout = {};
           
-          itemLayer.filter = layerMapbox.filter;//これは、ZL帯まで同じだが、filter条件が異なる場合にうまくいかない。
+          itemLayer.filter = layerMapbox.filter;
           
           //このlayerStyleをジオメトリタイプごとに変えればよい？
           var layerStyle = {
@@ -53,7 +54,7 @@ var convertImdObjToList = function(imdList, list){
             type: layerMapbox.type,
             minzoom: layerMapbox.minzoom * 1,
             maxzoom: (layerMapbox.maxzoom * 1) - 1
-          }
+          };
           
           
           //"test-field"関係　ほぼ決め打ち
@@ -120,7 +121,17 @@ var convertImdObjToList = function(imdList, list){
             case "road":
             case "transl":
             case "searoute ":
-              item.group = ["transport", "transport-outline"];
+              if(layerMapbox.metadata.path.match(/橋/)){//結局pathの文字列に頼る
+                item.group = [
+                  "transport-bridge", 
+                  "transport-outline"
+                ];
+              }else{
+                item.group = [
+                  "transport", 
+                  "transport-outline"
+                ];
+              }
               break;
             default:
               item.group = ["back"];
@@ -130,11 +141,11 @@ var convertImdObjToList = function(imdList, list){
         
         item.list.push(itemLayer);
         
-        if(!layerMapbox.metadata["line-role"] || layerMapbox.metadata["line-role"] != "outline"){
-          if(!item.zIndex){
-            item.zIndex = layerMapbox.metadata.zIndex ? layerMapbox.metadata.zIndex : 10000;
-          }
+        
+        if(layerMapbox.metadata.zIndex && item.zIndex){
+          item.zIndex = Math.max(item.zIndex, layerMapbox.metadata.zIndex);
         }
+
         
       }//for zRange
       
@@ -180,7 +191,7 @@ var style = JSON.parse(content);
 var styleList = [];
  
 //まとめる
-convertImdObjToList(style, styleList)
+convertImdObjToList(style, styleList);
 
 var resObj = {
   group: [
@@ -198,6 +209,12 @@ var resObj = {
     {
       "id":"transport",
       "title":"交通",
+      "hasOutline":true,
+      "editZIndex": true
+    },
+    {
+      "id":"transport-bridge",
+      "title":"交通-橋",
       "hasOutline":true,
       "editZIndex": true
     },
