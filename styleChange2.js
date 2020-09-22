@@ -19,9 +19,10 @@ var addLayerToParent = function(parent, layer, i=0){
   
     if(!parent[paths[i]]["layers"]) parent[paths[i]]["layers"] = {};
     
+    //ZLとfilter条件で分離する
     var minz = layer.minzoom ? layer.minzoom : 4;
     var maxz = layer.maxzoom ? layer.maxzoom : 18;
-    var zlRange = minz + "-" + maxz;
+    var zlRange = minz + "-" + maxz + "-" + JSON.stringify(layer.filter);
     if(!parent[paths[i]]["layers"][zlRange]) parent[paths[i]]["layers"][zlRange] = [];
     
     parent[paths[i]]["layers"][zlRange].push(layer);

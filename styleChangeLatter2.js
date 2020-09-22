@@ -8,7 +8,6 @@ var convertImdObjToList = function(imdList, list){
   
   for(name in imdList){
     
-    
     if(name == "unknown") continue;
     console.log(name);
     
@@ -16,7 +15,11 @@ var convertImdObjToList = function(imdList, list){
       var item = {
         title: name,
         type: "item",
-        list: []
+        group: [
+          "all", "outline"
+        ],
+        list: [],
+        zIndex: 10000
       };
       
       for(zRange in imdList[name]["layers"]){
@@ -29,7 +32,8 @@ var convertImdObjToList = function(imdList, list){
           maxzoom: maxz,
           type: "layer",
           list: [],
-          visible: true
+          visible: true,
+          filter: []
         }
         
         for(i in imdList[name]["layers"][zRange]){
@@ -37,26 +41,80 @@ var convertImdObjToList = function(imdList, list){
           if(!layerMapbox.paint) layerMapbox.paint = {};
           if(!layerMapbox.layout) layerMapbox.layout = {};
           
+          itemLayer.filter = layerMapbox.filter;//これは、ZL帯まで同じだが、filter条件が異なる場合にうまくいかない。
+          
+          //このlayerStyleをジオメトリタイプごとに変えればよい？
           var layerStyle = {
-            filter: layerMapbox.filter,
             draw: Object.assign(layerMapbox.paint, layerMapbox.layout),
             info: {
               type: layerMapbox.type
             },
             "source-layer": layerMapbox["source-layer"],
-            type: layerMapbox.type
+            type: layerMapbox.type,
+            minzoom: layerMapbox.minzoom * 1,
+            maxzoom: (layerMapbox.maxzoom * 1) - 1
+          }
+          
+          
+          //"test-field"関係　ほぼ決め打ち
+          if(layerMapbox.type == "symbol"){
+            
+            if(layerMapbox.layout["text-field"]){
+              
+              var text_field = layerMapbox.layout["text-field"];
+              console.log(text_field);
+              console.log(text_field.length);
+              
+              if(text_field[0] == "get"){
+                text_field = text_field[1];
+                console.log("GET");
+              }else if(text_field[0] == "format"){
+                text_field = "knj";//決め打ち
+                console.log("FORMAT");
+              }else if(text_field[0] == "to-string"){
+                var textFieldRound = (text_field[1][0] == "case") ? 10 : 1;
+                text_field = "alti";//決め打ち
+                console.log("NUMBER:" + textFieldRound);
+              }else if( JSON.stringify(text_field).match(/^\"\{.*\}\"$/) ){
+                var text_field = JSON.stringify(text_field).replace("\"{", "").replace("}\"", "");
+                console.log("{...}:" + text_field);
+              }
+              
+              layerStyle.info = Object.assign(layerStyle.info, {
+                "text-anchor-field": "dspPos",
+                "text-field": text_field, //ここの指定がきつい
+                "text-rotate-field": "arrngAgl",
+                "text-vertical-field": "arrng"
+              });
+              
+              if( textFieldRound ){
+                layerStyle.info["text-field-round"] = textFieldRound * 1;
+              }
+              
+            }//text_fieldあり
+            
+          }//symbol
+          
+          if(layerMapbox.metadata["line-role"] && layerMapbox.metadata["line-role"] == "outline"){
+            layerStyle.draw["line-role"] = layerMapbox.metadata["line-role"];
           }
           
           itemLayer.list.push(layerStyle);
-        }
+        
+        }//for
         
         item.list.push(itemLayer);
         
-      }
+        if(!layerMapbox.metadata["line-role"] || layerMapbox.metadata["line-role"] != "outline"){
+          item.zIndex = layerMapbox.metadata.zIndex ? layerMapbox.metadata.zIndex : 10000;
+        
+        }
+        
+      }//for zRange
       
       list.push(item);
     
-    }
+    }//if layers
     
     delete imdList[name]["layers"];
     
@@ -67,7 +125,7 @@ var convertImdObjToList = function(imdList, list){
         title: name,
         type: "directory",
         list: []
-      }
+      };
       
       convertImdObjToList(imdList[name], directory.list);
       
@@ -75,7 +133,7 @@ var convertImdObjToList = function(imdList, list){
       
     }
   
-  }
+  }//for name
   
 }
 
@@ -99,7 +157,20 @@ var styleList = [];
 convertImdObjToList(style, styleList)
 
 var resObj = {
-  group: "all",
+  group: [
+    {
+      "id":"outline",
+      "title":"枠線",
+      "filter":[["==","line-role","outline"]],
+      "editZIndex": true
+    },
+    { 
+      "id":"all",
+      "title":"すべて",
+      "hasOutline":true,
+      "editZIndex":true
+    }
+  ],
   list: styleList,
   maxNativeZoom: 16,
   title: "変換したもの"
