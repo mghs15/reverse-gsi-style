@@ -6,12 +6,12 @@ Mapbox Styleから地理院地図Vectorのスタイルを復元する試み（�
 2. 中間ファイルを`styleChangeLatter2.js`で地理院地図Vectorのスタイルに変換
 
 ## 進捗
-とりあえず、読み込めるようになった。
+とりあえず、復元後のスタイルを地理院地図Vectorで読み込めるようになった。
 
 現在の課題は以下の通り
-* groupを復元できない（階層順を制御できない）。
-* テキストのinfoはかなり決め打ちになり、Mapbox Styleを改造しすぎると対応できない。
-* 基準点の標高値の表示がうまくいかない。
+* groupを完全に復元できない（階層順を制御できない）。便宜的にsource-layerを用いて対応。
+* テキストのinfoは決め打ちでの設定になり、Mapbox Styleを改造しすぎると対応できない。
+
 
 ## 参考文献
 * https://docs.mapbox.com/mapbox-gl-js/style-spec/
