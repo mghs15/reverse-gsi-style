@@ -19,8 +19,7 @@ var convertImdObjToList = function(imdList, list){
         group: [
           "back"
         ],
-        list: [],
-        zIndex: 10000
+        list: []
       };
       
       for(zRange in imdList[name]["layers"]){
@@ -132,7 +131,9 @@ var convertImdObjToList = function(imdList, list){
         item.list.push(itemLayer);
         
         if(!layerMapbox.metadata["line-role"] || layerMapbox.metadata["line-role"] != "outline"){
-          item.zIndex = layerMapbox.metadata.zIndex ? layerMapbox.metadata.zIndex : 10000;
+          if(item.zIndex){
+            item.zIndex = layerMapbox.metadata.zIndex ? layerMapbox.metadata.zIndex : 10000;
+          }
         }
         
       }//for zRange
