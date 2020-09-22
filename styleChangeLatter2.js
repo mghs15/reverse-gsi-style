@@ -11,12 +11,13 @@ var convertImdObjToList = function(imdList, list){
     if(name == "unknown") continue;
     console.log(name);
     
+    
     if(imdList[name]["layers"]){
       var item = {
         title: name,
         type: "item",
         group: [
-          "all", "outline"
+          "back"
         ],
         list: [],
         zIndex: 10000
@@ -89,7 +90,14 @@ var convertImdObjToList = function(imdList, list){
               
               if( textFieldRound ){
                 layerStyle.info["text-field-round"] = textFieldRound * 1;
+                delete layerStyle.info["text-anchor-field"];
+                delete layerStyle.info["text-rotate-field"];
+                delete layerStyle.info["text-vertical-field"]; //"text-vertical-field"を消さないと、"text-field-round"が機能しない
               }
+              
+              delete layerStyle.draw["text-field"];
+              delete layerStyle.draw["text-rotate"];
+              
               
             }//text_fieldあり
             
@@ -100,14 +108,31 @@ var convertImdObjToList = function(imdList, list){
           }
           
           itemLayer.list.push(layerStyle);
-        
+          
+          //"item"について、source-layerに応じてgroupを設定する（決め打ち）
+          switch(layerMapbox["source-layer"]) {
+            case "symbol":
+            case "label":
+            case "transp":
+            case "elevation":
+              item.group = ["symbol"];
+              break;
+            case "railway":
+            case "road":
+            case "transl":
+            case "searoute ":
+              item.group = ["transport", "transport-outline"];
+              break;
+            default:
+              item.group = ["back"];
+          }
+          
         }//for
         
         item.list.push(itemLayer);
         
         if(!layerMapbox.metadata["line-role"] || layerMapbox.metadata["line-role"] != "outline"){
           item.zIndex = layerMapbox.metadata.zIndex ? layerMapbox.metadata.zIndex : 10000;
-        
         }
         
       }//for zRange
@@ -158,16 +183,26 @@ convertImdObjToList(style, styleList)
 
 var resObj = {
   group: [
+    { 
+      "id":"back",
+      "title":"その他",
+      "editZIndex":true
+    },
     {
-      "id":"outline",
-      "title":"枠線",
+      "id":"transport-outline",
+      "title":"交通-枠線",
       "filter":[["==","line-role","outline"]],
       "editZIndex": true
     },
-    { 
-      "id":"all",
-      "title":"すべて",
+    {
+      "id":"transport",
+      "title":"交通",
       "hasOutline":true,
+      "editZIndex": true
+    },
+    { 
+      "id":"symbol",
+      "title":"シンボル",
       "editZIndex":true
     }
   ],
